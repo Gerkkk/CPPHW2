@@ -1,0 +1,3 @@
+/mnt/c/Users/danpo/CLionProjects/untitled1/CMakeFiles/fluid.dir
+/mnt/c/Users/danpo/CLionProjects/untitled1/CMakeFiles/edit_cache.dir
+/mnt/c/Users/danpo/CLionProjects/untitled1/CMakeFiles/rebuild_cache.dir

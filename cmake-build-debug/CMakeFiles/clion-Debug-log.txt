@@ -1,0 +1,4 @@
+Cannot generate into C:\Users\danpo\CLionProjects\untitled1
+It is already used for project \mnt\c\Users\danpo\CLionProjects\untitled1
+
+Please either delete it manually or select another generation directory
