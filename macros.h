@@ -2,5 +2,5 @@
 #define FLOAT float
 #define DOUBLE double
 #define FAST_FIXED(N, K) FastFixed<N, K>
-#define TYPES FLOAT
-#define SIZES 100
+#define TYPES FIXED(64,10)
+#define SIZES S(36,64)

@@ -1,3 +1,0 @@
-/mnt/c/Users/danpo/CLionProjects/untitled1/OOST=shdsdsdf/CMakeFiles/fluid.dir
-/mnt/c/Users/danpo/CLionProjects/untitled1/OOST=shdsdsdf/CMakeFiles/edit_cache.dir
-/mnt/c/Users/danpo/CLionProjects/untitled1/OOST=shdsdsdf/CMakeFiles/rebuild_cache.dir

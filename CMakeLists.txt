@@ -8,9 +8,6 @@ add_compile_definitions(
         SIZES="${SIZES}"
 )
 
-
-
 configure_file(macros.h.in macros.h)
-
 add_executable(fluid fluid.cpp Fixed.h)
 

@@ -17,14 +17,6 @@ public:
         }
 
         T &get(int x, int y, int dx, int dy) {
-//            int ansi = -1;
-//            for (int i = 0; i < 4; i++) {
-//                if (deltas[i] == make_pair(dx, dy)) {
-//                    ansi = i;
-//                    break;
-//                }
-//            }
-//            size_t i = ansi;
             size_t i = ranges::find(deltas, pair(dx, dy)) - deltas.begin();
             assert(i < deltas.size());
             return v[x][y][i];
@@ -53,12 +45,12 @@ public:
     int last_use[FieldN][FieldM]{};
     int UT = 0;
     int dirs[FieldN][FieldM]{};
+    int out_ratio = 1000;
     mt19937 rnd;
 
 
     void save_to_file(std::ofstream &&out, bool is_for_next_run) {
-        out << (double)this->g << '\n' << rho[' '] << '\n' << rho.size() << '\n';
-
+        out << (double)this->g << '\n' << rho[' '] << '\n' << rho.size() - 1 << '\n';
 
         for (auto it : this->rho) {
             if (it.first != ' ') {
@@ -73,7 +65,6 @@ public:
             for (int j = 0; j < FieldM; j++) {
                 out << field[i][j];
             }
-            //out << '\n';
             out << '\n';
         }
 
@@ -130,18 +121,21 @@ public:
         for (int i = 0; i < nf; ++i) {
             in >> c >> crho;
             rho[c] = (PTYPE)crho;
+            std::cout << c << " " << crho << '\n';
         }
 
         in >> n >> k;
-
-        in.get(c);
-        in.get(c);
+        
+        c = '\n';
+        std:cout << n << " " << k << '\n';
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < k; ++j) {
-                in.get(this->field[i][j]);
+                while (c == '\n' || c == '\r') {
+                    in.get(c);
+                }
+                this->field[i][j] = c;
+                in.get(c);
             }
-            in.get(c);
-            in.get(c);
         }
 
         std::string flag;
@@ -185,14 +179,12 @@ public:
 
     }
 
-    void signal_handler(int signal_num){
+    void file_writer(){
         std::string path = "./files/" + std::to_string(this->tick_i);
         this->save_to_file(std::ofstream(path), true);
     }
 
     Simulation() {
-        //signal(SIGQUIT, signal_handler);
-
         rnd = mt19937(1937);
 
         for (size_t x = 0; x < FieldN; ++x) {
@@ -241,24 +233,13 @@ public:
         return {ret, 0, {0, 0}};
     }
 
-    //dangerous for double, float
     VTYPE random01() {
-        // unsigned int x = rnd();
-        // int y = (1 << 16) - 1;
-        // unsigned int res = x & y;
         double rand = ((double)rnd() / UINT_MAX);
         VTYPE ans = static_cast<VTYPE>(rand);
-        //std::cout << "Random, LOL " <<  ans << std::endl;
         return ans;
     }
 
-    // VFLOWTYPE random01() {
-    //     return VFLOWTYPE::from_raw((rnd() & ((1 << 16) - 1)));
-    // }
 
-    // PTYPE random01() {
-    //     return PTYPE::from_raw((rnd() & ((1 << 16) - 1)));
-    // }
 
     void propagate_stop(int x, int y, bool force = false) {
         if (!force) {
@@ -287,14 +268,12 @@ public:
     VTYPE move_prob(int x, int y) {
         VTYPE sum = 0;
         for (size_t i = 0; i < deltas.size(); ++i) {
-            //std::cout << "WHYYYYY" << i << std::endl;
             auto [dx, dy] = deltas[i];
             int nx = x + dx, ny = y + dy;
             if (field[nx][ny] == '#' || last_use[nx][ny] == UT) {
                 continue;
             }
             auto v = velocity.get(x, y, dx, dy);
-            //std::cout << "???????" << dx << " " << dy << " " << v << std::endl;
             if (v < 0) {
                 continue;
             }
@@ -332,23 +311,12 @@ public:
             }
 
             VTYPE p = random01() * sum;
-
-            //std::ranges here
             size_t d = std::ranges::upper_bound(tres, p) - tres.begin();
-//            size_t d = 0;
-//
-//            for(size_t i = 0; i < tres.size(); i++) {
-//                if (tres[i] == p) {
-//                    d = i;
-//                    break;
-//                }
-//            }
-
 
             auto [dx, dy] = deltas[d];
             nx = x + dx;
             ny = y + dy;
-            //std::cout << x << " " << y << " " << dx << " " << dy << " " <<  velocity.get(x, y, dx, dy) << std::endl;
+
             assert(velocity.get(x, y, dx, dy) > VTYPE(0) && field[nx][ny] != '#' && last_use[nx][ny] < UT);
 
             ret = (last_use[nx][ny] == UT - 1 || propagate_move(nx, ny, false));
@@ -374,14 +342,9 @@ public:
 
 
     void Simulate() {
-
-
         PTYPE total_delta_p = 0;
 
         while (true) {
-            //std::cout << "AAAAAAAAAAAAAAA" << std::endl;
-
-
             // Apply external forces
             for (size_t x = 0; x < FieldN; ++x) {
                 for (size_t y = 0; y < FieldM; ++y) {
@@ -393,20 +356,8 @@ public:
                 }
             }
 
-            // std::cout << "=================V=====" << std::endl;
-            // for (int i = 0; i < FieldN; i++) {
-            //     for (int j = 0; j < FieldM; j++) {
-            //         auto cur = velocity.get(i, j, 1, 0);
-            //         std::cout << cur << " ";
-            //     }
-            //     std::cout << std::endl;
-            // }
-            // std::cout << "=================V=====" << std::endl;
-
-
             // Apply forces from p
             memcpy(old_p, p, sizeof(p));
-            //old_p = p;
             for (size_t x = 0; x < FieldN; ++x) {
                 for (size_t y = 0; y < FieldM; ++y) {
                     if (field[x][y] == '#') {
@@ -424,7 +375,7 @@ public:
                                 contr -= VTYPE(force / rho[(int) field[nx][ny]]);
                                 continue;
                             }
-                            //std::cout << "???????" << x << " " << y << " " << dx << " " << dy << " " << rho[(int) field[x][y]] << " " << (int) field[x][y] << std::endl;
+
                             force -= PTYPE(contr * VTYPE(rho[(int) field[nx][ny]]));
                             contr = 0;
                             velocity.add(x, y, dx, dy, VTYPE(force / rho[(int) field[x][y]]));
@@ -438,15 +389,6 @@ public:
 
             // Make flow from velocities
             velocity_flow = {};
-//            for (int u = 0; u < deltas.size(); u++) {
-//                for (int i = 0; i < FieldN; i++) {
-//                    for (int j = 0; j < FieldM; j++) {
-//                        velocity_flow.v[u][i][j] = VFLOWTYPE(0);
-//                    }
-//                }
-//            }
-
-
             bool prop = false;
             do {
                 UT += 2;
@@ -476,7 +418,6 @@ public:
 
                         if (old_v > 0) {
                             assert(new_v <= old_v);
-                            //std::cout << "This shit is useless " << new_v << std::endl;
                             velocity.get(x, y, dx, dy) = new_v;
                             PTYPE force = (old_v - new_v) * rho[(int) field[x][y]];
                             if (field[x][y] == '.')
@@ -498,7 +439,6 @@ public:
             for (size_t x = 0; x < FieldN; ++x) {
                 for (size_t y = 0; y < FieldM; ++y) {
                     if (field[x][y] != '#' && last_use[x][y] != UT) {
-                       // std::cout << "!!!!!!! " << move_prob(x, y) << std::endl;
                         if (random01() < move_prob(x, y)) {
                             prop = true;
                             propagate_move(x, y, true);
@@ -508,7 +448,7 @@ public:
                     }
                 }
             }
-            //std::cout << prop << std::endl;
+
             if (prop) {
                 cout << "Tick " << tick_i << ":\n";
                 for (size_t x = 0; x < FieldN; ++x) {
@@ -518,8 +458,8 @@ public:
                     std::cout << std::endl;
                 }
             }
-            if (tick_i % 1000 == 0) {
-                this->signal_handler(0);
+            if (tick_i % out_ratio == 0) {
+                file_writer();
             }
             tick_i++;
         }
